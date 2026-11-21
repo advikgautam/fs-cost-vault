@@ -1,4 +1,5 @@
 import csv
+import stat
 import io
 import json
 import os
@@ -134,11 +135,19 @@ def add_component():
     return jsonify({"status": "created", "folder": folder}), 201
 
 
+def _remove_readonly(func, path, _):
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
 @app.route("/api/components/<folder>", methods=["DELETE"])
 def delete_component(folder):
     comp_dir = os.path.join(VAULT_DIR, safe_folder(folder))
     if os.path.exists(comp_dir):
-        shutil.rmtree(comp_dir)
+        try:
+            shutil.rmtree(comp_dir, onexc=_remove_readonly)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
     return jsonify({"status": "deleted"})
 
 
