@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FS Cost Report Vault</title>
+  <style>
+    :root { --bg: #0f1115; --panel: #181b22; --border: #2c3240; --text: #e6e8ec; --muted: #8b949e; --accent: #3b82f6; --green: #10b981; }
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; }
+
+    header { display: flex; gap: 10px; padding: 14px 20px; background: var(--panel); border-bottom: 1px solid var(--border); align-items: center; }
+    #search-input { flex: 1; padding: 10px 14px; background: #101318; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 14px; }
+    .btn { padding: 10px 16px; border-radius: 6px; border: 1px solid var(--border); background: #232834; color: var(--text); cursor: pointer; font-weight: 600; font-size: 13px; text-decoration: none; white-space: nowrap; }
+    .btn-add { background: var(--accent); border-color: var(--accent); font-size: 18px; padding: 6px 18px; }
+    .btn-sync { background: #134e4a; border-color: var(--green); color: #a7f3d0; }
+    .btn:hover { opacity: 0.9; }
+
+    main { display: grid; grid-template-columns: 320px 1fr; flex: 1; overflow: hidden; }
+    .left-col { background: var(--panel); border-right: 1px solid var(--border); padding: 16px; overflow-y: auto; }
+    .right-col { padding: 20px; overflow-y: auto; }
+    .col-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 12px; }
+
+    .part-item { padding: 12px 14px; margin-bottom: 8px; background: #101318; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 14px; }
+    .part-item:hover, .part-item.active { border-color: var(--accent); background: #1c2436; }
+
+    .comp-list { display: flex; flex-direction: column; gap: 10px; }
+    .comp-card { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; color: var(--text); text-decoration: none; }
+    .comp-card:hover { border-color: var(--accent); background: #1e2330; }
+    .comp-tag { font-size: 12px; color: var(--muted); }
+
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; justify-content: center; align-items: center; z-index: 50; }
+    .modal-bg.open { display: flex; }
+    .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 24px; width: 92%; max-width: 640px; }
+    .modal h2 { margin: 0 0 16px 0; font-size: 18px; }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; }
+    .field input, .field select, .field textarea { width: 100%; padding: 10px; background: #101318; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 14px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <header>
+    <input id="search-input" type="text" placeholder="SEARCH component by Name or ID..." />
+    <button class="btn btn-add" onclick="openModal()" title="Add Component">+</button>
+    <button class="btn" onclick="gitAction('pull')">↓ PULL</button>
+    <button class="btn btn-sync" onclick="gitAction('push')">↑ PUSH</button>
+    <a class="btn" href="/export">EXPORT</a>
+  </header>
+
+  <main>
+    <aside class="left-col">
+      <div class="col-title">List (Main Parts)</div>
+      <div id="main-parts-list">
+        {% for part in main_parts %}
+        <div class="part-item" onclick="selectMainPart('{{ part }}', this)">{{ part }}</div>
+        {% endfor %}
+      </div>
+    </aside>
+
+    <section class="right-col">
+      <div class="col-title" id="right-title">Select a Main Part or Search</div>
+      <div class="comp-list" id="comp-list"></div>
+    </section>
+  </main>
+
+  <div class="modal-bg" id="add-modal">
+    <div class="modal">
+      <h2>Add Component</h2>
+      <form id="add-form">
+        <div class="row-2">
+          <div class="field">
+            <label>Name / ID by which it is called</label>
+            <input name="name_id" placeholder="e.g. BR-01 Master Cylinder" required />
+          </div>
+          <div class="field">
+            <label>Main Part it is under</label>
+            <select name="main_part" required>
+              {% for part in main_parts %}
+              <option value="{{ part }}">{{ part }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Document Upload (Multiple Allowed)</label>
+          <input type="file" name="documents" multiple />
+        </div>
+
+        <div class="field">
+          <label>Photo Upload (Multiple Allowed)</label>
+          <input type="file" name="photos" accept="image/*" multiple />
+        </div>
+
+        <div class="field">
+          <label>Description (Below Photo on Second Screen)</label>
+          <textarea name="description" rows="4" placeholder="Enter price, calculations, material, or notes..."></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-add" style="font-size:14px; padding:10px 20px;">Save Component</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let currentMainPart = "";
+
+    async function selectMainPart(part, el) {
+      currentMainPart = part;
+      document.getElementById("search-input").value = "";
+      document.querySelectorAll(".part-item").forEach(i => i.classList.remove("active"));
+      if (el) el.classList.add("active");
+      document.getElementById("right-title").textContent = `Components — ${part}`;
+      const res = await fetch(`/api/components?main_part=${encodeURIComponent(part)}`);
+      renderComponents(await res.json());
+    }
+
+    function renderComponents(items) {
+      const box = document.getElementById("comp-list");
+      if (!items.length) {
+        box.innerHTML = `<div style="color:#8b949e; font-size:14px;">No components here yet. Click + to add one.</div>`;
+        return;
+      }
+      box.innerHTML = items.map(c => `
+        <a class="comp-card" href="/component/${encodeURIComponent(c.folder)}" target="_blank">
+          <strong>${c.name_id}</strong>
+          <span class="comp-tag">${c.main_part} ↗</span>
+        </a>
+      `).join("");
+    }
+
+    document.getElementById("search-input").addEventListener("input", async (e) => {
+      const q = e.target.value.trim();
+      if (!q) {
+        if (currentMainPart) selectMainPart(currentMainPart);
+        else document.getElementById("comp-list").innerHTML = "";
+        return;
+      }
+      document.querySelectorAll(".part-item").forEach(i => i.classList.remove("active"));
+      document.getElementById("right-title").textContent = `Search Results for "${q}"`;
+      const res = await fetch(`/api/components?q=${encodeURIComponent(q)}`);
+      renderComponents(await res.json());
+    });
+
+    function openModal() { document.getElementById("add-modal").classList.add("open"); }
+    function closeModal() { document.getElementById("add-modal").classList.remove("open"); }
+
+    document.getElementById("add-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const chosenPart = formData.get("main_part");
+      const res = await fetch("/api/components", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) return alert(data.error);
+      e.target.reset();
+      closeModal();
+      const partEl = [...document.querySelectorAll(".part-item")].find(el => el.textContent === chosenPart);
+      selectMainPart(chosenPart, partEl);
+    };
+
+    async function gitAction(action) {
+      const res = await fetch(`/api/git/${action}`, { method: "POST" });
+      const data = await res.json();
+      alert((data.ok ? "Success:\n" : "Error:\n") + data.message);
+      if (data.ok && currentMainPart) selectMainPart(currentMainPart);
+    }
+  </script>
+</body>
+</html>
