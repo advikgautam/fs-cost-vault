@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 90" width="360" height="90" aria-hidden="true">
+  <g fill="none" stroke="#A0A6B2" stroke-width="1.1" opacity="0.28">
+    <!-- Subtle CAD wireframe race-car motif -->
+    <path d="M24 62 L58 52 L112 48 L156 30 L214 26 L256 42 L318 36 L336 36 L330 56 L296 64"/>
+    <path d="M112 48 L148 20 L204 20 L236 38"/>
+    <path d="M58 52 L28 46 L24 62"/>
+    <ellipse cx="78" cy="60" rx="22" ry="20"/>
+    <ellipse cx="78" cy="60" rx="13" ry="12"/>
+    <ellipse cx="268" cy="58" rx="24" ry="22"/>
+    <ellipse cx="268" cy="58" rx="14" ry="13"/>
+    <line x1="100" y1="64" x2="244" y2="64"/>
+    <line x1="130" y1="36" x2="232" y2="36" stroke-dasharray="4 3"/>
+    <line x1="156" y1="30" x2="156" y2="64" stroke-dasharray="3 3"/>
+    <line x1="214" y1="26" x2="214" y2="64" stroke-dasharray="3 3"/>
+    <!-- CAD grid lines -->
+    <line x1="8" y1="82" x2="352" y2="82" stroke-dasharray="6 4"/>
+  </g>
+</svg>
