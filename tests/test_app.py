@@ -53,6 +53,9 @@ def test_component_lifecycle_costs_docs_and_exports(client):
     )
     assert res.status_code == 201
     folder = res.get_json()["folder"]
+    # Verify component is stored under its subsystem folder
+    assert os.path.exists(os.path.join(cost_app.VAULT_DIR, "Powertrain", folder, "meta.json"))
+    assert os.path.exists(os.path.join(cost_app.VAULT_DIR, "Powertrain", folder, "vendor_quote.pdf"))
 
     # Duplicate ID is rejected
     dup = client.post(

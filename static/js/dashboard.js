@@ -496,6 +496,57 @@
   // Add Component Modal
   const addModal = document.getElementById("add-modal");
   const addForm = document.getElementById("add-form");
+  const docsInput = document.getElementById("f-docs");
+  const photosInput = document.getElementById("f-photos");
+  let queuedDocs = [];
+  let queuedPhotos = [];
+
+  function renderQueuedFiles(listEl, files, kind) {
+    if (!listEl) return;
+    if (!files.length) {
+      listEl.innerHTML = "";
+      return;
+    }
+    listEl.innerHTML = files.map((f, idx) => `
+      <div class="queued-file-item">
+        <span class="queued-file-name" title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</span>
+        <span style="display:flex;align-items:center;gap:6px;">
+          <span class="queued-file-meta">${window.VaultUI.formatBytes(f.size)}</span>
+          <button type="button" class="btn btn-sm btn-icon" style="min-width:22px;min-height:22px;font-size:11px;" aria-label="Remove ${escapeHtml(f.name)}" onclick="removeQueuedFile('${kind}', ${idx})">✕</button>
+        </span>
+      </div>
+    `).join("");
+  }
+
+  window.removeQueuedFile = (kind, idx) => {
+    if (kind === "docs") {
+      queuedDocs.splice(idx, 1);
+      renderQueuedFiles(document.getElementById("queued-docs-list"), queuedDocs, "docs");
+    } else {
+      queuedPhotos.splice(idx, 1);
+      renderQueuedFiles(document.getElementById("queued-photos-list"), queuedPhotos, "photos");
+    }
+  };
+
+  docsInput?.addEventListener("change", (e) => {
+    for (const f of e.target.files) {
+      if (!queuedDocs.some((x) => x.name === f.name && x.size === f.size)) {
+        queuedDocs.push(f);
+      }
+    }
+    e.target.value = "";
+    renderQueuedFiles(document.getElementById("queued-docs-list"), queuedDocs, "docs");
+  });
+
+  photosInput?.addEventListener("change", (e) => {
+    for (const f of e.target.files) {
+      if (!queuedPhotos.some((x) => x.name === f.name && x.size === f.size)) {
+        queuedPhotos.push(f);
+      }
+    }
+    e.target.value = "";
+    renderQueuedFiles(document.getElementById("queued-photos-list"), queuedPhotos, "photos");
+  });
 
   function updateModalCostPreview() {
     if (!addForm) return;
@@ -522,6 +573,10 @@
   window.openAddModal = () => {
     if (!addModal) return;
     addForm.reset();
+    queuedDocs = [];
+    queuedPhotos = [];
+    renderQueuedFiles(document.getElementById("queued-docs-list"), queuedDocs, "docs");
+    renderQueuedFiles(document.getElementById("queued-photos-list"), queuedPhotos, "photos");
     if (state.currentSubsystem && addForm.main_part) {
       addForm.main_part.value = state.currentSubsystem;
     }
@@ -550,6 +605,10 @@
     }
 
     const formData = new FormData(addForm);
+    formData.delete("documents");
+    formData.delete("photos");
+    queuedDocs.forEach((f) => formData.append("documents", f));
+    queuedPhotos.forEach((f) => formData.append("photos", f));
     formData.set("name_id", `${cid} ${cname}`.trim());
 
     submitBtn.disabled = true;
