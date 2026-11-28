@@ -207,6 +207,14 @@
               <div class="field"><label for="f-ref">Reference Links</label><input id="f-ref" name="reference_links" placeholder="Optional URL or datasheet ref" /></div>
             </div>
             <div class="field"><label for="f-mnotes">Manufacturing Notes / Technical Remarks</label><textarea id="f-mnotes" name="technical_remarks" rows="2"></textarea></div>
+            <div class="field">
+              <label for="f-doc-cat">Document Category</label>
+              <select id="f-doc-cat" name="doc_category">
+                {% for cat in doc_categories %}
+                <option value="{{ cat }}">{{ cat }}</option>
+                {% endfor %}
+              </select>
+            </div>
             <div class="form-grid-2">
               <div class="field">
                 <label for="f-docs">Supporting Documents (Multiple)</label>

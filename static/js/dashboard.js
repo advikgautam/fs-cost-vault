@@ -156,12 +156,12 @@
         <div class="metric-card">
           <div class="metric-label">Documents Uploaded</div>
           <div class="metric-value">${m.documents_uploaded}</div>
-          <div class="metric-sub">${m.verified_docs} internally verified</div>
+          <div class="metric-sub">Invoices, receipts &amp; evidence</div>
         </div>
         <div class="metric-card">
-          <div class="metric-label">Pending Verification</div>
-          <div class="metric-value">${m.pending_verification}</div>
-          <div class="metric-sub">${m.needs_attention_docs} needing attention</div>
+          <div class="metric-label">Active Subsystems</div>
+          <div class="metric-value">${data.subsystems.filter((s) => s.component_count > 0).length} / 9</div>
+          <div class="metric-sub">Subsystems with registered parts</div>
         </div>
       </div>
 
@@ -173,8 +173,6 @@
               <th>Components</th>
               <th>Total Cost</th>
               <th>Cost Share</th>
-              <th>Verified Docs</th>
-              <th>Pending / Attention</th>
               <th>Missing Docs</th>
             </tr>
           </thead>
@@ -198,10 +196,6 @@
                     <div class="dist-bar-track" title="${pct}% of highest subsystem">
                       <div class="dist-bar-fill" style="width:${pct}%"></div>
                     </div>
-                  </td>
-                  <td class="mono" style="color:var(--status-verified-text);">${s.verified_docs}</td>
-                  <td class="mono" style="color:${s.needs_attention_docs > 0 ? "var(--status-attention-text)" : "var(--status-pending-text)"};">
-                    ${s.pending_docs} pending / ${s.needs_attention_docs} attention
                   </td>
                   <td class="mono" style="color:${s.missing_docs_components > 0 ? "var(--status-attention-text)" : "var(--text-secondary)"};">
                     ${s.missing_docs_components} part(s)
@@ -278,15 +272,6 @@
 
       <div class="filter-bar">
         <div class="filter-group">
-          <label class="sr-only" for="filter-status">Filter by document status</label>
-          <select id="filter-status" class="select-control">
-            <option value="">All Document Statuses</option>
-            <option value="Verified" ${state.statusFilter === "Verified" ? "selected" : ""}>Verified</option>
-            <option value="Pending Review" ${state.statusFilter === "Pending Review" ? "selected" : ""}>Pending Review</option>
-            <option value="Needs Attention" ${state.statusFilter === "Needs Attention" ? "selected" : ""}>Needs Attention</option>
-            <option value="Missing Evidence" ${state.statusFilter === "Missing Evidence" ? "selected" : ""}>Missing Evidence</option>
-          </select>
-
           <label class="sr-only" for="filter-class">Filter by classification</label>
           <select id="filter-class" class="select-control">
             <option value="">All Classifications</option>
@@ -376,7 +361,7 @@
               <th>Qty / Unit</th>
               <th>Unit Cost</th>
               <th>Total Cost</th>
-              <th>Document Status</th>
+              <th>Files</th>
               <th>Last Updated</th>
               <th>Actions</th>
             </tr>
@@ -392,10 +377,7 @@
                 <td class="mono">${c.quantity} ${escapeHtml(c.unit)}</td>
                 <td class="mono">${formatCurrency(c.unit_cost)}</td>
                 <td class="mono" style="font-weight:600;">${formatCurrency(c.total_cost)}</td>
-                <td>
-                  ${statusBadge(c.doc_status_summary.overall_status)}
-                  <div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">${c.doc_count} doc(s), ${c.photo_count} photo(s)</div>
-                </td>
+                <td style="font-size:12px;color:var(--text-secondary);">${c.doc_count} doc(s), ${c.photo_count} photo(s)</td>
                 <td style="font-size:12px;color:var(--text-secondary);">${formatDate(c.updated_at)}</td>
                 <td>
                   <div style="display:flex;gap:6px;">
@@ -419,7 +401,7 @@
                 <div class="mono" style="font-size:11.5px;color:var(--text-secondary);">${escapeHtml(c.component_id)}</div>
                 <a class="comp-link" href="/component/${encodeURIComponent(c.folder)}" style="font-size:15px;">${escapeHtml(c.component_name)}</a>
               </div>
-              ${statusBadge(c.doc_status_summary.overall_status)}
+              <span class="count-pill">${c.doc_count} doc(s)</span>
             </div>
             <div class="comp-mobile-meta">
               <div>Qty: <strong class="mono">${c.quantity} ${escapeHtml(c.unit)}</strong></div>

@@ -43,14 +43,7 @@ SUBSYSTEM_META = {
 }
 
 DOC_CATEGORIES = [
-    "Quotations",
-    "Invoices and receipts",
-    "Material documents",
-    "Engineering drawings",
-    "Manufacturing evidence",
-    "Cost calculations",
-    "Supplier information",
-    "Other",
+    "Invoices and Receipts",
 ]
 
 DOC_STATUSES = ["Pending Review", "Verified", "Needs Attention"]
@@ -233,7 +226,7 @@ def normalize_component(meta, folder_name=None):
             fpath = os.path.join(comp_dir, d)
             fsize = os.path.getsize(fpath) if os.path.exists(fpath) else 0
             doc_meta[d] = {
-                "category": "Other",
+                "category": DOC_CATEGORIES[0],
                 "size": fsize,
                 "uploaded_at": meta.get("updated_at") or meta.get("created_at") or "",
                 "uploader": meta.get("updated_by") or "Team Member",
@@ -246,7 +239,7 @@ def normalize_component(meta, folder_name=None):
             if entry.get("status") not in DOC_STATUSES:
                 entry["status"] = "Pending Review"
             if entry.get("category") not in DOC_CATEGORIES:
-                entry["category"] = "Other"
+                entry["category"] = DOC_CATEGORIES[0]
             if not entry.get("size") and os.path.exists(os.path.join(comp_dir, d)):
                 entry["size"] = os.path.getsize(os.path.join(comp_dir, d))
 
@@ -562,7 +555,7 @@ def add_component():
             p.save(os.path.join(comp_dir, pname))
             photo_names.append(pname)
 
-    doc_category = data.get("doc_category") if data.get("doc_category") in DOC_CATEGORIES else "Other"
+    doc_category = data.get("doc_category") if data.get("doc_category") in DOC_CATEGORIES else DOC_CATEGORIES[0]
     doc_names = []
     doc_meta = {}
     for d in docs:
@@ -725,9 +718,9 @@ def upload_documents(folder):
         return jsonify({"error": "Component not found"}), 404
 
     files = request.files.getlist("documents")
-    category = request.form.get("category", "Other")
+    category = request.form.get("category", DOC_CATEGORIES[0])
     if category not in DOC_CATEGORIES:
-        category = "Other"
+        category = DOC_CATEGORIES[0]
     linked_to = (request.form.get("linked_to") or "").strip()
     actor = (request.form.get("uploader") or "Team Member").strip() or "Team Member"
 
@@ -937,16 +930,9 @@ def export_csv():
 
 def _cat_folder_name(category):
     mapping = {
-        "Quotations": "Quotations",
-        "Invoices and receipts": "Invoices",
-        "Material documents": "Material_Documents",
-        "Engineering drawings": "Engineering_Drawings",
-        "Manufacturing evidence": "Manufacturing_Evidence",
-        "Cost calculations": "Cost_Calculations",
-        "Supplier information": "Supplier_Information",
-        "Other": "Other",
+        "Invoices and Receipts": "Invoices_and_Receipts",
     }
-    return mapping.get(category, "Other")
+    return mapping.get(category, "Invoices_and_Receipts")
 
 
 @app.route("/export/package")
