@@ -43,14 +43,7 @@ SUBSYSTEM_META = {
 }
 
 DOC_CATEGORIES = [
-    "Quotations",
-    "Invoices and receipts",
-    "Material documents",
-    "Engineering drawings",
-    "Manufacturing evidence",
-    "Cost calculations",
-    "Supplier information",
-    "Other",
+    "Invoices and Receipts",
 ]
 
 DOC_STATUSES = ["Pending Review", "Verified", "Needs Attention"]
@@ -71,6 +64,38 @@ def now_iso():
 def safe_folder(name):
     cleaned = re.sub(r"[^A-Za-z0-9_-]", "_", (name or "").strip())
     return cleaned or "component"
+
+
+def subsystem_folder(main_part):
+    cleaned = re.sub(r"[^A-Za-z0-9]+", "_", (main_part or "Misc").strip()).strip("_")
+    return cleaned or "Misc"
+
+
+def ensure_subsystem_folders():
+    os.makedirs(VAULT_DIR, exist_ok=True)
+    for part in MAIN_PARTS:
+        sdir = os.path.join(VAULT_DIR, subsystem_folder(part))
+        os.makedirs(sdir, exist_ok=True)
+
+
+def find_component_dir(folder, main_part=None):
+    folder = safe_folder(folder)
+    if main_part:
+        candidate = os.path.join(VAULT_DIR, subsystem_folder(main_part), folder)
+        if os.path.exists(os.path.join(candidate, "meta.json")):
+            return candidate
+    for part in MAIN_PARTS:
+        candidate = os.path.join(VAULT_DIR, subsystem_folder(part), folder)
+        if os.path.exists(os.path.join(candidate, "meta.json")):
+            return candidate
+    legacy = os.path.join(VAULT_DIR, folder)
+    if os.path.exists(os.path.join(legacy, "meta.json")):
+        return legacy
+    return None
+
+
+def target_component_dir(folder, main_part):
+    return os.path.join(VAULT_DIR, subsystem_folder(main_part), safe_folder(folder))
 
 
 def _to_float(val, default=0.0):
@@ -194,14 +219,14 @@ def normalize_component(meta, folder_name=None):
     docs = list(meta.get("documents") or [])
     photos = list(meta.get("photos") or [])
     doc_meta = dict(meta.get("document_meta") or {})
-    comp_dir = os.path.join(VAULT_DIR, folder)
+    comp_dir = find_component_dir(folder, meta.get("main_part")) or target_component_dir(folder, meta.get("main_part") or "Misc")
 
     for d in docs:
         if d not in doc_meta:
             fpath = os.path.join(comp_dir, d)
             fsize = os.path.getsize(fpath) if os.path.exists(fpath) else 0
             doc_meta[d] = {
-                "category": "Other",
+                "category": DOC_CATEGORIES[0],
                 "size": fsize,
                 "uploaded_at": meta.get("updated_at") or meta.get("created_at") or "",
                 "uploader": meta.get("updated_by") or "Team Member",
@@ -214,7 +239,7 @@ def normalize_component(meta, folder_name=None):
             if entry.get("status") not in DOC_STATUSES:
                 entry["status"] = "Pending Review"
             if entry.get("category") not in DOC_CATEGORIES:
-                entry["category"] = "Other"
+                entry["category"] = DOC_CATEGORIES[0]
             if not entry.get("size") and os.path.exists(os.path.join(comp_dir, d)):
                 entry["size"] = os.path.getsize(os.path.join(comp_dir, d))
 
@@ -288,7 +313,7 @@ def summarize_component(comp):
 
 
 def save_component(folder, meta):
-    comp_dir = os.path.join(VAULT_DIR, folder)
+    comp_dir = find_component_dir(folder, meta.get("main_part")) or target_component_dir(folder, meta.get("main_part") or "Misc")
     os.makedirs(comp_dir, exist_ok=True)
     with open(os.path.join(comp_dir, "meta.json"), "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2)
@@ -309,9 +334,10 @@ def append_history(meta, action, details, actor="Team Member"):
 
 
 def load_component(folder):
-    meta_path = os.path.join(VAULT_DIR, folder, "meta.json")
-    if not os.path.exists(meta_path):
+    comp_dir = find_component_dir(folder)
+    if not comp_dir:
         return None
+    meta_path = os.path.join(comp_dir, "meta.json")
     with open(meta_path, "r", encoding="utf-8") as f:
         raw = json.load(f)
     return normalize_component(raw, folder)
@@ -319,12 +345,28 @@ def load_component(folder):
 
 def load_all_components():
     items = []
+    seen = set()
     if not os.path.exists(VAULT_DIR):
         return items
     for entry in os.listdir(VAULT_DIR):
-        comp = load_component(entry)
-        if comp:
-            items.append(comp)
+        entry_path = os.path.join(VAULT_DIR, entry)
+        if not os.path.isdir(entry_path):
+            continue
+        if os.path.exists(os.path.join(entry_path, "meta.json")):
+            comp = load_component(entry)
+            if comp and comp["folder"] not in seen:
+                items.append(comp)
+                seen.add(comp["folder"])
+        else:
+            for sub_entry in os.listdir(entry_path):
+                sub_path = os.path.join(entry_path, sub_entry)
+                if os.path.isdir(sub_path) and os.path.exists(os.path.join(sub_path, "meta.json")):
+                    with open(os.path.join(sub_path, "meta.json"), "r", encoding="utf-8") as f:
+                        raw = json.load(f)
+                    comp = normalize_component(raw, sub_entry)
+                    if comp and comp["folder"] not in seen:
+                        items.append(comp)
+                        seen.add(comp["folder"])
     items.sort(key=lambda x: x["name_id"].lower())
     return items
 
@@ -497,10 +539,11 @@ def add_component():
         return jsonify({"error": "Component ID / Name and Subsystem are required."}), 400
 
     folder = safe_folder(component_id or name_id)
-    comp_dir = os.path.join(VAULT_DIR, folder)
-    if os.path.exists(os.path.join(comp_dir, "meta.json")):
+    if find_component_dir(folder):
         return jsonify({"error": f"Component '{component_id or name_id}' already exists."}), 400
 
+    ensure_subsystem_folders()
+    comp_dir = target_component_dir(folder, main_part)
     os.makedirs(comp_dir, exist_ok=True)
     ts = now_iso()
     actor = (data.get("updated_by") or "Team Member").strip() or "Team Member"
@@ -512,7 +555,7 @@ def add_component():
             p.save(os.path.join(comp_dir, pname))
             photo_names.append(pname)
 
-    doc_category = data.get("doc_category") if data.get("doc_category") in DOC_CATEGORIES else "Other"
+    doc_category = data.get("doc_category") if data.get("doc_category") in DOC_CATEGORIES else DOC_CATEGORIES[0]
     doc_names = []
     doc_meta = {}
     for d in docs:
@@ -636,9 +679,14 @@ def update_component(folder):
     if "manufacturing_ops" in data and isinstance(data["manufacturing_ops"], list):
         comp["manufacturing_ops"] = data["manufacturing_ops"]
 
+    old_dir = find_component_dir(folder, comp.get("main_part"))
     action_label = data.get("_history_action") or "Updated"
     action_details = data.get("_history_details") or "Component details updated."
     append_history(comp, action_label, action_details, actor)
+    new_dir = target_component_dir(folder, comp.get("main_part") or "Misc")
+    if old_dir and os.path.abspath(old_dir) != os.path.abspath(new_dir):
+        os.makedirs(os.path.dirname(new_dir), exist_ok=True)
+        shutil.move(old_dir, new_dir)
     save_component(folder, comp)
     return jsonify(normalize_component(comp, folder))
 
@@ -650,8 +698,8 @@ def _remove_readonly(func, path, _):
 
 @app.route("/api/components/<folder>", methods=["DELETE"])
 def delete_component(folder):
-    comp_dir = os.path.join(VAULT_DIR, safe_folder(folder))
-    if os.path.exists(comp_dir):
+    comp_dir = find_component_dir(folder)
+    if comp_dir and os.path.exists(comp_dir):
         try:
             try:
                 shutil.rmtree(comp_dir, onexc=_remove_readonly)
@@ -670,16 +718,16 @@ def upload_documents(folder):
         return jsonify({"error": "Component not found"}), 404
 
     files = request.files.getlist("documents")
-    category = request.form.get("category", "Other")
+    category = request.form.get("category", DOC_CATEGORIES[0])
     if category not in DOC_CATEGORIES:
-        category = "Other"
+        category = DOC_CATEGORIES[0]
     linked_to = (request.form.get("linked_to") or "").strip()
     actor = (request.form.get("uploader") or "Team Member").strip() or "Team Member"
 
     if not files:
         return jsonify({"error": "No files selected."}), 400
 
-    comp_dir = os.path.join(VAULT_DIR, folder)
+    comp_dir = find_component_dir(folder, comp.get("main_part")) or target_component_dir(folder, comp.get("main_part") or "Misc")
     os.makedirs(comp_dir, exist_ok=True)
     ts = now_iso()
     uploaded = []
@@ -758,8 +806,9 @@ def delete_document(folder, filename):
     if not comp:
         return jsonify({"error": "Component not found"}), 404
 
-    fpath = os.path.join(VAULT_DIR, folder, filename)
-    if os.path.exists(fpath):
+    comp_dir = find_component_dir(folder, comp.get("main_part"))
+    fpath = os.path.join(comp_dir, filename) if comp_dir else ""
+    if fpath and os.path.exists(fpath):
         os.remove(fpath)
 
     if filename in comp["documents"]:
@@ -785,7 +834,7 @@ def upload_photos(folder):
     if not photos:
         return jsonify({"error": "No photos selected."}), 400
 
-    comp_dir = os.path.join(VAULT_DIR, folder)
+    comp_dir = find_component_dir(folder, comp.get("main_part")) or target_component_dir(folder, comp.get("main_part") or "Misc")
     os.makedirs(comp_dir, exist_ok=True)
     added = []
     for p in photos:
@@ -835,7 +884,10 @@ def git_push():
 
 @app.route("/vault/<folder>/<path:filename>")
 def serve_file(folder, filename):
-    return send_from_directory(os.path.join(VAULT_DIR, safe_folder(folder)), filename)
+    comp_dir = find_component_dir(folder)
+    if not comp_dir:
+        return "Component not found", 404
+    return send_from_directory(comp_dir, filename)
 
 
 @app.route("/export")
@@ -878,16 +930,9 @@ def export_csv():
 
 def _cat_folder_name(category):
     mapping = {
-        "Quotations": "Quotations",
-        "Invoices and receipts": "Invoices",
-        "Material documents": "Material_Documents",
-        "Engineering drawings": "Engineering_Drawings",
-        "Manufacturing evidence": "Manufacturing_Evidence",
-        "Cost calculations": "Cost_Calculations",
-        "Supplier information": "Supplier_Information",
-        "Other": "Other",
+        "Invoices and Receipts": "Invoices_and_Receipts",
     }
-    return mapping.get(category, "Other")
+    return mapping.get(category, "Invoices_and_Receipts")
 
 
 @app.route("/export/package")
@@ -939,7 +984,7 @@ def export_package():
             zf.writestr(f"{comp_root}/Component_Details.json", json.dumps(c, indent=2))
 
             # Original supporting documents organized by category
-            comp_disk_dir = os.path.join(VAULT_DIR, c["folder"])
+            comp_disk_dir = find_component_dir(c["folder"], c.get("main_part")) or os.path.join(VAULT_DIR, c["folder"])
             doc_records = []
             for d in c["documents"]:
                 dmeta = c["document_meta"].get(d, {})

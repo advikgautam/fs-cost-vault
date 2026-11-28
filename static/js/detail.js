@@ -22,7 +22,6 @@
     document.getElementById("hdr-class").textContent = comp.classification;
     document.getElementById("hdr-qty").textContent = `${comp.quantity} ${comp.unit}`;
     document.getElementById("hdr-total-cost").textContent = formatCurrency(comp.total_cost);
-    document.getElementById("hdr-doc-status").innerHTML = statusBadge(comp.doc_status_summary.overall_status);
     document.getElementById("bc-subsystem").textContent = comp.main_part;
     document.getElementById("bc-name").textContent = comp.component_name;
   }
@@ -73,8 +72,8 @@
             <div class="form-grid-2" style="gap:10px;font-size:13px;">
               <div><span style="color:var(--text-secondary);">Unit Cost:</span><br><strong class="mono" style="font-size:16px;">${formatCurrency(comp.unit_cost)}</strong> <span class="calc-tag">${comp.unit_cost_is_calculated ? "Calculated" : "Manual"}</span></div>
               <div><span style="color:var(--text-secondary);">Total Cost:</span><br><strong class="mono" style="font-size:16px;color:var(--racing-red);">${formatCurrency(comp.total_cost)}</strong></div>
-              <div><span style="color:var(--text-secondary);">Supporting Docs:</span><br><strong>${comp.doc_status_summary.total} file(s)</strong> (${comp.doc_status_summary.verified} verified, ${comp.doc_status_summary.pending} pending, ${comp.doc_status_summary.needs_attention} attention)</div>
-              <div><span style="color:var(--text-secondary);">Overall Doc Status:</span><br>${statusBadge(comp.doc_status_summary.overall_status)}</div>
+              <div><span style="color:var(--text-secondary);">Supporting Docs:</span><br><strong>${comp.doc_status_summary.total} file(s)</strong></div>
+              <div><span style="color:var(--text-secondary);">Photos Uploaded:</span><br><strong>${(comp.photos || []).length} photo(s)</strong></div>
             </div>
           </div>
         </div>
@@ -363,7 +362,7 @@
 
   function renderDocuments() {
     const el = document.getElementById("tab-docs");
-    const categories = window.DOC_CATEGORIES || [];
+    const categories = window.DOC_CATEGORIES || ["Invoices and Receipts"];
     const docs = comp.documents || [];
     const dmeta = comp.document_meta || {};
 
@@ -372,14 +371,14 @@
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
           <div>
             <h3 style="margin:0;font-size:15px;">Supporting Documents Repository</h3>
-            <p style="margin:2px 0 0;font-size:12.5px;color:var(--text-secondary);">Organize evidence by category. Uploaded files default to <strong>Pending Review</strong> until internally verified.</p>
+            <p style="margin:2px 0 0;font-size:12.5px;color:var(--text-secondary);">Upload and manage invoices, receipts, and supporting evidence for this component.</p>
           </div>
           <div id="upload-progress-wrap" style="display:none;min-width:180px;font-size:12px;color:var(--text-secondary);"></div>
         </div>
       </div>
 
       ${categories.map((cat) => {
-        const catDocs = docs.filter((d) => (dmeta[d]?.category || "Other") === cat);
+        const catDocs = docs.filter((d) => (dmeta[d]?.category || categories[0]) === cat);
         return `
           <div class="doc-category-card">
             <div class="doc-category-header">
@@ -403,14 +402,11 @@
                       <div class="doc-row-name">${escapeHtml(d)}</div>
                       <div class="doc-row-meta">
                         ${escapeHtml(ext)} • ${formatBytes(m.size)} • Uploaded ${formatDate(m.uploaded_at)} by ${escapeHtml(m.uploader || "Team")}
-                        ${m.reviewer_note ? `<div style="color:var(--status-attention-text);margin-top:3px;">Note: ${escapeHtml(m.reviewer_note)}</div>` : ""}
                       </div>
                     </div>
                     <div class="doc-row-actions">
-                      ${statusBadge(m.status || "Pending Review")}
                       ${canPreview ? `<button type="button" class="btn btn-sm" onclick="DocPreview.open('${escapeHtml(folder)}','${escapeHtml(d)}')">Preview</button>` : ""}
                       <a class="btn btn-sm" href="/vault/${encodeURIComponent(folder)}/${encodeURIComponent(d)}" download="${escapeHtml(d)}">Download</a>
-                      <button type="button" class="btn btn-sm" onclick="openReviewDocModal('${escapeHtml(d)}')">Review</button>
                       <button type="button" class="btn btn-sm btn-danger" onclick="deleteDoc('${escapeHtml(d)}')">Delete</button>
                     </div>
                   </div>

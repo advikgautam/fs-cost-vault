@@ -53,6 +53,9 @@ def test_component_lifecycle_costs_docs_and_exports(client):
     )
     assert res.status_code == 201
     folder = res.get_json()["folder"]
+    # Verify component is stored under its subsystem folder
+    assert os.path.exists(os.path.join(cost_app.VAULT_DIR, "Powertrain", folder, "meta.json"))
+    assert os.path.exists(os.path.join(cost_app.VAULT_DIR, "Powertrain", folder, "vendor_quote.pdf"))
 
     # Duplicate ID is rejected
     dup = client.post(
@@ -75,15 +78,14 @@ def test_component_lifecycle_costs_docs_and_exports(client):
     assert "Cost Breakdown" in detail_html
     assert "BOM / CCBOM" in detail_html
 
-    # Update document review status
+    # Update document metadata
     patch_res = client.patch(
         f"/api/components/{folder}/documents/vendor_quote.pdf",
-        json={"status": "Verified", "category": "Quotations", "reviewer_note": "Matches PO"},
+        json={"category": "Invoices and Receipts"},
     )
     assert patch_res.status_code == 200
     comp_data = patch_res.get_json()
-    assert comp_data["doc_status_summary"]["overall_status"] == "Verified"
-    assert comp_data["document_meta"]["vendor_quote.pdf"]["category"] == "Quotations"
+    assert comp_data["document_meta"]["vendor_quote.pdf"]["category"] == "Invoices and Receipts"
 
     # Update cost entries & BOM
     put_res = client.put(
@@ -116,7 +118,7 @@ def test_component_lifecycle_costs_docs_and_exports(client):
     zf = zipfile.ZipFile(io.BytesIO(zip_res.data))
     names = zf.namelist()
     assert "FORMULA_BHARAT_2027_COST_REPORT/manifest.json" in names
-    assert any("Quotations/vendor_quote.pdf" in n for n in names)
+    assert any("Invoices_and_Receipts/vendor_quote.pdf" in n for n in names)
 
     # Delete component
     del_res = client.delete(f"/api/components/{folder}")

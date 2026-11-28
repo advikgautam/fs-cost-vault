@@ -36,7 +36,6 @@
         <th>Qty / Unit</th>
         <th>Unit Cost (₹)</th>
         <th>Total Cost (₹)</th>
-        <th>Doc Status</th>
         <th>Files</th>
       </tr>
     </thead>
@@ -50,11 +49,10 @@
         <td class="mono">{{ c.quantity }} {{ c.unit }}</td>
         <td class="mono">₹{{ "%.2f"|format(c.unit_cost) }}</td>
         <td class="mono"><strong>₹{{ "%.2f"|format(c.total_cost) }}</strong></td>
-        <td>{{ c.doc_status_summary.overall_status }}</td>
         <td>{{ c.documents|length }} doc(s), {{ c.photos|length }} photo(s)</td>
       </tr>
       {% else %}
-      <tr><td colspan="9" style="text-align:center;">No components registered in the vault yet.</td></tr>
+      <tr><td colspan="8" style="text-align:center;">No components registered in the vault yet.</td></tr>
       {% endfor %}
     </tbody>
   </table>
