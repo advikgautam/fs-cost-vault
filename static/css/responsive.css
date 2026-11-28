@@ -21,8 +21,18 @@
 
 /* Tablet / landscape & portrait (<= 960px) */
 @media (max-width: 960px) {
-  .brand-motif {
-    display: none;
+  .brand-header-inner {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 10px;
+  }
+
+  .brand-logos {
+    justify-self: center;
+  }
+
+  .brand-right {
+    justify-self: center;
   }
 
   .mobile-menu-btn {
