@@ -1,0 +1,51 @@
+:root {
+  /* Core Surface & Brand Palette */
+  --bg-main: #0B0D11;
+  --bg-surface: #151820;
+  --bg-panel: #11141B;
+  --bg-elevated: #1A1E28;
+  --bg-hover: #1E2330;
+
+  --border: #303642;
+  --border-subtle: #232833;
+
+  --racing-red: #E31B2B;
+  --racing-red-hover: #C81523;
+  --racing-red-soft: rgba(227, 27, 43, 0.14);
+
+  --text-main: #F4F5F7;
+  --text-secondary: #A0A6B2;
+  --text-muted: #707784;
+
+  /* Muted Status Colours */
+  --status-verified-bg: rgba(16, 185, 129, 0.14);
+  --status-verified-border: rgba(16, 185, 129, 0.35);
+  --status-verified-text: #6EE7B7;
+
+  --status-pending-bg: rgba(245, 158, 11, 0.14);
+  --status-pending-border: rgba(245, 158, 11, 0.35);
+  --status-pending-text: #FCD34D;
+
+  --status-attention-bg: rgba(239, 68, 68, 0.14);
+  --status-attention-border: rgba(239, 68, 68, 0.35);
+  --status-attention-text: #FCA5A5;
+
+  --status-missing-bg: rgba(160, 166, 178, 0.12);
+  --status-missing-border: rgba(160, 166, 178, 0.28);
+  --status-missing-text: #A0A6B2;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Radii & Shadows */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  /* Layout */
+  --sidebar-width: 264px;
+  --max-content-width: 1520px;
+}

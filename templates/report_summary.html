@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Formula Bharat 2027 — Cost Report Summary</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; color: #111827; margin: 28px; background: #fff; }
+    .top { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #E31B2B; padding-bottom: 12px; margin-bottom: 20px; }
+    h1 { margin: 0; font-size: 20px; }
+    .meta { font-size: 12px; color: #4B5563; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 24px; }
+    th, td { border: 1px solid #D1D5DB; padding: 8px 10px; text-align: left; }
+    th { background: #F3F4F6; font-weight: 700; }
+    .mono { font-family: ui-monospace, monospace; }
+    .print-btn { padding: 8px 16px; background: #E31B2B; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    @media print { .print-btn { display: none; } body { margin: 12px; } }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div>
+      <h1>Amrita Racing — Formula Bharat 2027 Cost Report Summary</h1>
+      <div class="meta">Generated: {{ generated_at }} • Total Components: {{ components|length }} • Total Vehicle Cost: ₹{{ "%.2f"|format(total_vehicle_cost) }}</div>
+    </div>
+    <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Subsystem</th>
+        <th>Component ID</th>
+        <th>Component Name</th>
+        <th>Classification</th>
+        <th>Qty / Unit</th>
+        <th>Unit Cost (₹)</th>
+        <th>Total Cost (₹)</th>
+        <th>Doc Status</th>
+        <th>Files</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in components %}
+      <tr>
+        <td>{{ c.main_part }}</td>
+        <td class="mono">{{ c.component_id }}</td>
+        <td>{{ c.component_name }}</td>
+        <td>{{ c.classification }}</td>
+        <td class="mono">{{ c.quantity }} {{ c.unit }}</td>
+        <td class="mono">₹{{ "%.2f"|format(c.unit_cost) }}</td>
+        <td class="mono"><strong>₹{{ "%.2f"|format(c.total_cost) }}</strong></td>
+        <td>{{ c.doc_status_summary.overall_status }}</td>
+        <td>{{ c.documents|length }} doc(s), {{ c.photos|length }} photo(s)</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" style="text-align:center;">No components registered in the vault yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>
