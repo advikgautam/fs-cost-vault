@@ -1,21 +1,21 @@
 :root {
-  /* Core Surface & Brand Palette */
-  --bg-main: #0B0D11;
-  --bg-surface: #151820;
-  --bg-panel: #11141B;
-  --bg-elevated: #1A1E28;
-  --bg-hover: #1E2330;
+  /* Core Black, White & Racing Red Palette */
+  --bg-main: #050505;
+  --bg-surface: #111111;
+  --bg-panel: #0B0B0B;
+  --bg-elevated: #191919;
+  --bg-hover: #1E1E1E;
 
-  --border: #303642;
-  --border-subtle: #232833;
+  --border: #2A2A2A;
+  --border-subtle: #1D1D1D;
 
   --racing-red: #E31B2B;
   --racing-red-hover: #C81523;
   --racing-red-soft: rgba(227, 27, 43, 0.14);
 
-  --text-main: #F4F5F7;
-  --text-secondary: #A0A6B2;
-  --text-muted: #707784;
+  --text-main: #FFFFFF;
+  --text-secondary: #A3A3A3;
+  --text-muted: #737373;
 
   /* Muted Status Colours */
   --status-verified-bg: rgba(16, 185, 129, 0.14);
@@ -30,9 +30,9 @@
   --status-attention-border: rgba(239, 68, 68, 0.35);
   --status-attention-text: #FCA5A5;
 
-  --status-missing-bg: rgba(160, 166, 178, 0.12);
-  --status-missing-border: rgba(160, 166, 178, 0.28);
-  --status-missing-text: #A0A6B2;
+  --status-missing-bg: rgba(163, 163, 163, 0.12);
+  --status-missing-border: rgba(163, 163, 163, 0.28);
+  --status-missing-text: #A3A3A3;
 
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -42,8 +42,8 @@
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.65);
 
   /* Layout */
   --sidebar-width: 264px;
